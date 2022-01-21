@@ -33,7 +33,7 @@ Microk8s does not make it easy to have multi-node cluster (like minikube). So, t
 git clone <project-repo> microk8s
 cd microk8s
 # Edit
-scripts/mnmk8s launch
+scripts/mnmk8s init
 ```
 
 ## Daily Drivers
@@ -54,3 +54,4 @@ scripts/mnmk8s launch
 | (Re)Join a worker to k8s (k8s-worker1)             | `scripts/mnmk8s join-k8s-master k8s-worker1` |
 | _Bulk_ Execute command (uname -a) on a group (k8s) | `scripts/mnmk8s on k8s exec uname -a`        |
 | _Bulk_ Execute command (uname -a) on all nodes     | `scripts/mnmk8s on all exec uname -a`        |
+| Destroy it all | `scripts/mnmk8s destroy` |

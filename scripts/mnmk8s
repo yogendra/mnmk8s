@@ -30,10 +30,25 @@ OP=$1; shift
 function init {
   on k8s-nodes async launch-k8s-node
   on general-nodes async launch-general-node
+  echo "Executing Node create Job "
   wait < <(jobs -p)
+  echo "Done"
   on all update-hosts
   on k8s-workers join-k8s-master
   on all mount-storage
+  echo "All Done"
+}
+
+function destroy {
+
+  on all async delete -p
+  echo "Executing Destroy job "
+  wait < <(jobs -p)
+  echo "Done"
+}
+function delete {
+  instance=$1; shift
+  multipass delete ${instance} $@
 }
 
 function stop {
