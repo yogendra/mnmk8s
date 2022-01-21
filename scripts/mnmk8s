@@ -107,6 +107,10 @@ function microk8s {
   instance=$1; shift
   multipass exec $instance microk8s $@
 }
+function kubectl {
+  microk8s k8s-master kubectl $@
+}
+
 function kubeconfig {
   microk8s k8s-master config $@
 }
