@@ -61,3 +61,9 @@ scripts/mnmk9s destroy
 | _Bulk_ Execute command (uname -a) on a group (k8s) | `scripts/mnmk8s on k8s exec uname -a`        |
 | _Bulk_ Execute command (uname -a) on all nodes     | `scripts/mnmk8s on all exec uname -a`        |
 | Destroy it all                                     | `scripts/mnmk8s destroy`                     |
+
+## TODO
+
+- Move all VM initialization steps to cloud-init
+- Better networking
+- Customize config
