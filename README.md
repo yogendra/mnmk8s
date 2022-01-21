@@ -9,11 +9,11 @@ Microk8s does not make it easy to have multi-node cluster (like minikube). So, t
 
 | Nodes       | vCPU | RAM (GB) | Disk (GB) | Cloud Init                      | Description   | Group(s)             |
 | ----------- | ---- | -------- | --------- | ------------------------------- | ------------- | -------------------- |
-| k8s-master  | 2    | 8        | 50        | config/microk8s-cloud-init.yaml | K8s Master    | all, k8s             |
-| k8s-worker1 | 2    | 8        | 50        | config/microk8s-cloud-init.yaml | K8s Worker #1 | all, k8s, k8s-worker |
-| k8s-worker2 | 2    | 8        | 50        | config/microk8s-cloud-init.yaml | K8s Worker #2 | all, k8s, k8s-worker |
-| k8s-worker3 | 2    | 8        | 50        | config/microk8s-cloud-init.yaml | K8s Worker #3 | all, k8s, k8s-worker |
-| k8s-worker4 | 2    | 8        | 50        | config/microk8s-cloud-init.yaml | K8s Worker #4 | all, k8s, k8s-worker |
+| k8s-master  | 2    | 8        | 40        | config/microk8s-cloud-init.yaml | K8s Master    | all, k8s             |
+| k8s-worker1 | 2    | 8        | 40        | config/microk8s-cloud-init.yaml | K8s Worker #1 | all, k8s, k8s-worker |
+| k8s-worker2 | 2    | 8        | 40        | config/microk8s-cloud-init.yaml | K8s Worker #2 | all, k8s, k8s-worker |
+| k8s-worker3 | 2    | 8        | 40        | config/microk8s-cloud-init.yaml | K8s Worker #3 | all, k8s, k8s-worker |
+| k8s-worker4 | 2    | 8        | 40        | config/microk8s-cloud-init.yaml | K8s Worker #4 | all, k8s, k8s-worker |
 | k8s-jumpbox | 2    | 4        | 50        |                                 | K8s Jumpbox   | all, general         |
 | k8s-storage | 2    | 4        | 50        |                                 | K8s Storage   | all, general         |
 
@@ -36,6 +36,12 @@ cd microk8s
 scripts/mnmk8s init
 ```
 
+## Cleanup
+
+```bash
+scripts/mnmk9s destroy
+```
+
 ## Daily Drivers
 
 | Pupose                                             | Command                                      |
@@ -54,4 +60,4 @@ scripts/mnmk8s init
 | (Re)Join a worker to k8s (k8s-worker1)             | `scripts/mnmk8s join-k8s-master k8s-worker1` |
 | _Bulk_ Execute command (uname -a) on a group (k8s) | `scripts/mnmk8s on k8s exec uname -a`        |
 | _Bulk_ Execute command (uname -a) on all nodes     | `scripts/mnmk8s on all exec uname -a`        |
-| Destroy it all | `scripts/mnmk8s destroy` |
+| Destroy it all                                     | `scripts/mnmk8s destroy`                     |
