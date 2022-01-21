@@ -30,7 +30,7 @@ OP=$1; shift
 function init {
   on k8s-nodes async launch-k8s-node
   on general-nodes async launch-general-node
-  echo "Executing Node create Jobs: $(jobs -p) "
+  echo Executing Node create Jobs: $(jobs -p)
   wait < <(jobs -p)
   echo "Done"
   on all update-hosts
@@ -42,7 +42,7 @@ function init {
 function destroy {
 
   on all async delete -p
-  echo "Executing Destroy Jobs: $(jobs -p) "
+  echo Executing Destroy Jobs: $(jobs -p)
   wait < <(jobs -p)
   echo "Done"
 }
