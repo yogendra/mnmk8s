@@ -1,0 +1,179 @@
+#!/bin/bash
+
+#
+# This is a management script for microk8s based environemnt
+# USAGE
+#   Initialize
+#   $ mnm init
+#
+#   Run a task on a sigle target
+#   $ mnm <task> <target>
+#
+#       Tasks: exec, mount-storage, join-k8s-master, update-hosts, exec
+#       Target: k8s-master, k8s-worker#, k8s-jumbox, k8s-storage
+#
+#   Run task on target-group
+#   $ mnm on <target-group> <task>  [arguments..]
+#
+#       Target Group: all, k8s-node, k8s-workes, general-nodes
+#  Other actions are
+#
+set -Eeuo pipefail
+
+LOG=$PROJECT_DIR/manage.log
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+PROJECT_DIR=$( cd ${SCRIPT_DIR}/.. ; pwd)
+OP=$1; shift
+
+
+function init {
+  on k8s-nodes async launch-k8s-node
+  on general-nodes async launch-general-node
+  wait < <(jobs -p)
+  on all update-hosts
+  on k8s-workers join-k8s-master
+  on all mount-storage
+}
+
+function stop {
+  instance=$1; shift
+  multipass stop ${instance} $@
+}
+
+function start {
+  instance=$1; shift
+  multipass -v start ${instance} $@
+}
+function restart {
+  instance=$1; shift
+  multipass -v restart ${instance} $@
+}
+function info {
+  instance=$1; shift
+  multipass info ${instance} $@
+}
+function shell {
+  instance=$1; shift
+  multipass shell ${instance} $@
+}
+function launch-k8s-node {
+  instance=$1; shift
+  multipass -v launch -n ${instance} -m8g -c2 --cloud-init ${PROJECT_DIR}/config/microk8s-cloud-init.yaml
+  multipass -v exec ${instance} -- sudo cloud-init status --wait
+  multipass exec ${instance} -- sudo usermod -a -G microk8s ubuntu
+  multipass exec ${instance} -- sudo chown -f -R ubuntu ~/.kube
+  multipass restart ${instance}
+  multipass exec ${instance} -- microk8s status --wait-ready
+}
+
+function launch-general-node {
+  instance=$1; shift
+  multipass -v launch -n ${instance} -m8g -c2
+}
+
+function join-k8s-master {
+  instance=$1;shift
+  master_ip=$( multipass list --format=json | jq -r '.list[] | select(.name == "k8s-master")|  .ipv4[0] ')
+  token=$(multipass exec k8s-master -- microk8s add-node --format token-check)
+  multipass exec ${instance} -- microk8s join $master_ip:25000/$token --worker
+}
+
+
+function mount-storage {
+  instance=$1; shift
+  mkdir ${PROJECT_DIR}/storage/shared
+  multipass -v mount ${PROJECT_DIR}/storage/shared ${instance}:/mnt/shared
+  mkdir -p ${PROJECT_DIR}/storage/${instance}
+  multipass -v mount ${PROJECT_DIR}/storage/${instance}  ${instance}:/mnt/data
+}
+
+function update-hosts {
+  instance=$1;shift
+  TARGET=/etc/hosts
+
+  START_TAG="# Multipass Hosts : Start"
+  END_TAG="# Multipass Hosts : End"
+
+  echo "$( multipass exec ${instance} -- sed "/^${START_TAG}/,/\$${END_TAG}/d" ${TARGET})
+$START_TAG
+192.168.65.1    k8s-gateway k8s-gw  k8s-host
+$(multipass list --format=json | jq -r ".list[] |  .ipv4[0] + \"\t\" + .name" | grep -v $instance)
+$END_TAG
+" | multipass exec ${instance} -- sudo tee ${TARGET} >> $LOG
+}
+
+function exec {
+  instance=$1; shift
+  multipass exec ${instance} -- $@
+}
+function async {
+  op=$1; shift
+  instance=$1; shift
+  $op $instance $@ >>$LOG 2>&1 &
+
+}
+function on {
+  instance=$1; shift
+  op=$1;shift
+  async=0
+  if [[ "$op" == "async" ]];
+  then
+    op=$1; shift
+    async=1
+  fi
+
+  instance_list=""
+
+  case $instance in
+    "all"|"all-nodes"|"nodes")
+      instance_list="k8s-master k8s-worker1 k8s-worker2 k8s-worker3 k8s-worker4 k8s-jumpbox k8s-storage"
+      ;;
+    "k8s-worker"|"k8s-workers"|"workers")
+      instance_list="k8s-worker1 k8s-worker2 k8s-worker3 k8s-worker4"
+      ;;
+    "k8s-node"|"k8s-nodes"|"all-k8s"|"k8s")
+      instance_list="k8s-master k8s-worker1 k8s-worker2 k8s-worker3 k8s-worker4"
+      ;;
+    "general-nodes"|"general")
+      instance_list="k8s-jumpbox k8s-storage"
+      ;;
+    *)
+      instance_list="$instance"
+      ;;
+  esac
+
+  for instance in $instance_list
+  do
+    if [[ $async -eq 0 ]] ; then
+      $op $instance $@
+    else
+      async $op $instance $@
+    fi
+  done
+}
+
+function sod {
+  on all async start
+  echo Waiting on Start Jobs: $(jobs -p)
+  wait < <(jobs -p)
+  on all async update-hosts
+  echo Waiting on Update Hosts Jobs: $(jobs -p)
+  wait < <(jobs -p)
+  on all async mount-storage
+  echo Waiting on Mount Jobs: $(jobs -p)
+  wait < <(jobs -p)
+  on k8s-master exec microk8s status --wait-ready
+  on k8s-master exec microk8s config > $PROJECT_DIR/.kubeconfig
+  echo Done
+}
+
+
+function eod {
+  on all async stop
+  echo Waiting on Stop Jobs: $(jobs -p)
+  wait < <(jobs -p)
+  echo Done
+}
+
+$OP $@

@@ -1,0 +1,12 @@
+#cloud-config
+snap:
+    commands:
+        00: ['install', 'microk8s', '--classic']
+apt_update: true
+apt_upgrade: true
+package_update: true
+package_upgrade: true
+package_reboot_if_required: false
+
+packages:
+-  net-tools
