@@ -30,7 +30,7 @@ OP=$1; shift
 function init {
   on k8s-nodes async launch-k8s-node
   on general-nodes async launch-general-node
-  echo "Executing Node create Job "
+  echo "Executing Node create Jobs: $(jobs -p) "
   wait < <(jobs -p)
   echo "Done"
   on all update-hosts
@@ -42,7 +42,7 @@ function init {
 function destroy {
 
   on all async delete -p
-  echo "Executing Destroy job "
+  echo "Executing Destroy Jobs: $(jobs -p) "
   wait < <(jobs -p)
   echo "Done"
 }
@@ -74,7 +74,7 @@ function shell {
 }
 function launch-k8s-node {
   instance=$1; shift
-  multipass -v launch -n ${instance} -m8g -c2 --cloud-init ${PROJECT_DIR}/config/microk8s-cloud-init.yaml
+  multipass -v launch -n ${instance} -m8g -c2 -d40g --cloud-init ${PROJECT_DIR}/config/microk8s-cloud-init.yaml
   multipass -v exec ${instance} -- sudo cloud-init status --wait
   multipass exec ${instance} -- sudo usermod -a -G microk8s ubuntu
   multipass exec ${instance} -- sudo chown -f -R ubuntu ~/.kube
@@ -84,7 +84,7 @@ function launch-k8s-node {
 
 function launch-general-node {
   instance=$1; shift
-  multipass -v launch -n ${instance} -m8g -c2
+  multipass -v launch -n ${instance} -m4g -c2 -d50g
 }
 
 function join-k8s-master {
@@ -170,7 +170,7 @@ function on {
   instance=$1; shift
   op=$1;shift
   async=0
-  if [[ "$op" == "async" ]];
+  if [[ "$op" == "async" ]]
   then
     op=$1; shift
     async=1
