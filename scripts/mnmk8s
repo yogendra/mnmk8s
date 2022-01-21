@@ -103,6 +103,40 @@ $END_TAG
 " | multipass exec ${instance} -- sudo tee ${TARGET} >> $LOG
 }
 
+function microk8s {
+  instance=$1; shift
+  multipass exec $instance microk8s $@
+}
+function kubeconfig {
+  microk8s k8s-master config $@
+}
+function ctr {
+  microk8s k8s-master ctr $@
+}
+
+function enable {
+  microk8s k8s-master enable $@
+}
+function disable {
+  microk8s k8s-master disable $@
+}
+
+function helm {
+  microk8s k8s-master helm $@
+}
+function helm3 {
+  microk8s k8s-master helm3 $@
+}
+function istioctl {
+  microk8s k8s-master istioctl $@
+}
+function linkerd {
+  microk8s k8s-master linkerd $@
+}
+function istioctl {
+  microk8s k8s-master istioctl $@
+}
+
 function exec {
   instance=$1; shift
   multipass exec ${instance} -- $@
