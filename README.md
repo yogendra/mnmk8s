@@ -1,6 +1,7 @@
 # mnmk8s: Multi-node Microk8s
 
 ![K8s get node output](docs/screenshot.png)
+
 This project creates VM based cluster on Mac (and may be linux). It uses Canonical stack.
 Microk8s does not make it easy to have multi-node cluster (like minikube). So, this project is addressing that gap.
 
